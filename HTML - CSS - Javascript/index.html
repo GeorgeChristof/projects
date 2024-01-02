@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+</head>
+<body>
+    <h1>Test Chat Application <span id="name"></span></h1>
+    
+    <textarea name="" id="log" cols="30" rows="10"></textarea>
+    <div id="users" ></div>
+
+    <input type="text" id="message"><button id="btn">SEND</button>
+
+    <h1>Send privately</h1>
+    <div id="private" ></div>
+
+    <script>
+        const userId = Math.floor(Math.random()*1000000)
+        const name = prompt("Please give your name:");
+        
+        document.getElementById("name").innerText = name;
+
+        const socket = new WebSocket("ws://127.0.0.1:8080/chat?roomId=main")
+
+        socket.onopen = function() {
+            console.log("WebSocket connection opened");
+
+            let data = {
+                name: name,
+                id: userId,
+                room: 'main',
+                type: 'connection'
+            }
+            send(data);
+        }
+
+        socket.onerror = function(evt) {
+            console.log("WebSocket connection ERROR, State:", socket.readyState);
+        }
+
+        //Χρήστες που ειναι μεσα στο public 
+        let users = new Map(); 
+
+        socket.onmessage = function(evt) {
+            console.dir(evt);
+            console.log(`O SERVER λεει: ${evt.data}`);
+            let s = JSON.parse(evt.data)
+            if (s.type == 'users') {
+                for (let i = 0; i < s.contacts.length; i++) {
+                    createUserButton(s.contacts[i]);
+                    createPrivateButton(s.contacts[i]);
+                }
+            }
+            else if (s.type == 'connection') {
+                createUserButton(s);
+                createPrivateButton(s);
+            }
+            else if (s.type == 'leave') {
+                log.value += users.get(s.userid).name + ' left!\n'
+                document.querySelector(`button[data-userid="${s.userid}"]`).remove()
+            }
+            else if (s.type == 'invite') {
+                let otherUser = users.get( s.from )
+                console.log("Πηρα πρόσκληση απο τον χρήστη "+ otherUser.name + " με ID " + s.from)
+                let ok = confirm("Δεχεσαι τη προσκληση απο τον χρηστη " + otherUser.name + " ?")
+                send({type: 'invite-reply', from: userId, to: s.from, accept: ok})
+                
+                if (ok) {
+                    console.log("ACCEPTED!")
+                    //let roomId = Math.min(s.from, s.to)
+                    window.location = '/private.html?userName=' + name + '&userId=' + userId + '&otherUserId=' + s.from;
+                }
+            }
+            else if (s.type == 'invite-reply') {
+                let otherUser = users.get( s.from )
+                let accept = s.accept
+                console.log("O χρήστης "+ otherUser.name + " με ID " + s.from + (accept ? " δεχτηκε " : " απερριψε ") + "την προσκληση μου")
+                if (accept) {
+                    //let roomId = Math.min(s.from, s.to)
+                    window.location = '/private.html?userName=' + name + '&userId=' + userId + '&otherUserId=' + s.from;
+                }
+            }
+            else {
+                log.value += s.user + ' λεει: ' + s.message + "\n";
+            }
+
+        }
+
+
+
+        function createUserButton(user)
+        {
+            let list = document.getElementById('users');
+            const userName = user.name;
+            const userId = user.id;
+
+            users.set(userId, user);
+
+            let b = document.createElement('button');
+            b.dataset.userid=userId
+            b.innerText = userName;
+
+            b.onclick = invite
+
+            list.appendChild(b);
+        }
+
+        function createPrivateButton(user)
+        {
+            let list = document.getElementById('private');
+            const userName = user.name;
+            const userId = user.id;
+
+            users.set(userId, user);
+
+            let b = document.createElement('button');
+            b.dataset.userid=userId;
+            b.innerText = userName;
+
+            b.onclick = function(){
+                const messg = document.getElementById("message").value;
+                let data = {user: name, message: messg, type: 'message', toUser: userId};
+                send(data);
+            }
+
+            list.appendChild(b);
+        }
+
+
+        function invite(evt) {
+            let btn = evt.target;
+
+            let inviteUserId =  parseInt( btn.dataset.userid );
+
+            if (inviteUserId == userId) {
+                return;
+            }
+
+            console.log("Ειμαι ο χρήστης με ID "+ userId + " και προσκαλώ τον χρήστη: "+ users.get(inviteUserId).name)
+
+            send({type: 'invite', from: userId, to: inviteUserId})
+        }
+
+
+
+
+        document.getElementById("btn").onclick = function() {
+            const messg = document.getElementById("message").value;
+            let data = {user: name, message: messg, type: 'message'};
+            send(data);
+        }
+        
+    
+
+        function send(data) {
+            socket.send( JSON.stringify(data) );
+        }
+    </script>
+
+</body>
+</html>

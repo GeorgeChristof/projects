@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Chat</title>
+</head>
+<body>
+    <h1>Private Chat Room <span id="name"></span></h1>
+
+    <!-- TRILIZA DIV, TABLE AND STYLESHEET-->
+    <style>
+        .trilizacell {
+            height : 40px;
+            width : 40px;
+        }
+    </style>
+    <div>
+        <table id="triliza"></table>
+    </div>
+
+    <!-- END TRILIZA-->
+
+    <div>
+        <h2>Local</h2>
+        <video width=400 id="local" autoplay  playsinline></video>
+    </div>
+    <div>
+        <h2>Remote</h2>
+            <video width=400 id="remote" autoplay playsinline></video>
+    </div>
+    
+    <textarea name="" id="log" cols="30" rows="10"></textarea>
+    <div id="users" ></div>
+
+    <input type="text" id="message"><button id="btn">SEND</button>
+
+    <script>
+        myUrl = new URL(window.location.href);
+        name = myUrl.searchParams.get("userName");
+        userId = myUrl.searchParams.get("userId");
+        otherId = myUrl.searchParams.get("otherUserId");
+        
+        document.getElementById("name").innerText = name;
+        const socket = new WebSocket("ws://127.0.0.1:8080/privatechat")
+
+        socket.onopen = function() {
+            console.log("WebSocket Private connection opened");
+
+            let data = {
+                name: name,
+                id: userId,
+                room: 'private',
+                type: 'connection'
+            }
+            send(data);
+        }
+
+        socket.onerror = function(evt) {
+            console.log("WebSocket connection ERROR, State:", socket.readyState);
+        }
+
+        // TRILIZA CODE /
+        window.onload = function() {
+            createTriliza();
+        }
+
+        function sendMove(r,c){
+            let data = {user: name, message: [r,c], type: 'triliza', toUser: otherId, fromUser: userId};
+            send(data);
+        }
+
+        function markCell(r,c, other){
+            let cellMark = (other) ? 'O' : 'X';
+            let cell = document.getElementById('triliza-' + r + '-' + c);
+            cell.innerText = cellMark;
+            console.log('Marking: ' + r + '-' + c + ' with ' + cellMark);
+
+        }
+
+        function onClickTrilizaCell(sender){
+            cell = sender.path[0]; 
+            r = cell.dataset.r;
+            c = cell.dataset.c;
+            markCell(r,c,false);
+            sendMove(r,c);
+        }
+
+        function createTriliza()
+        {
+            let table = document.getElementById('triliza');
+
+            for (let r = 0; r < 3; ++r ){
+                let tr = document.createElement('tr');
+                table.appendChild(tr);
+                for (let c = 0; c < 3; ++c){
+                    let td = document.createElement('td');
+                    tr.appendChild(td);
+                    let cell = document.createElement('button');
+                    cell.classList.add('trilizacell');
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.id = 'triliza-' + r + '-' + c;
+                    td.appendChild(cell);
+                    cell.onclick = onClickTrilizaCell;
+                }
+            }
+        } 
+
+        // END TRILIZA CODE /
+
+        document.getElementById("btn").onclick = function() {
+            const messg = document.getElementById("message").value;
+            let data = {user: name, message: messg, type: 'message', toUser: userId};
+            send(data);
+        }
+        
+
+        function send(data) {
+            socket.send( JSON.stringify(data) );
+        }
+
+        socket.onmessage = async function(evt) {
+            let message = JSON.parse(evt.data);
+            if (message.type == "offer") {
+                console.log(username() + ": got offer")
+                await pc.setRemoteDescription(message.offer);
+                console.log(username() + ": localStream : ", localStream);
+
+                let answer = await pc.createAnswer();
+                pc.setLocalDescription(answer);
+                socketSend({type: "answer", answer: answer});
+                console.log(username() + ": send answer")
+            }
+            else if (message.type == "answer") {
+                console.log(username() + ": got answer");
+                await pc.setRemoteDescription(message.answer);
+            }
+            else if (message.type == "candidate") {
+                console.log(username() + ": got candidate");
+                await pc.addIceCandidate(message.candidate);
+            }
+            else if (message.type == "join") {
+                caller = true;
+                console.log("User "+message.user+" has joined the room "+ message.room)
+                console.log(username() + ": Starting the CALL");
+
+                let channel = pc.createDataChannel("MyChannel");
+                channel.onopen = function(evt) {
+                    console.log("NEW DATACHANNEL created by me")
+                }
+                channel.onmessage = function(evt) {
+                    console.log("DATACHANNEL created by me, received:" + evt.data)
+                }
+
+                let offer = await pc.createOffer();
+                console.log(`OFFER:`, offer.sdp);
+                pc.setLocalDescription(offer);
+                socketSend( {type: "offer",  offer: offer} );
+            }
+            else if (message.type == 'leave') {
+                log.value += users.get(message.userid).name + ' left!\n'
+                // createUserButton(s);
+                document.querySelector(`button[data-userid="${message.userid}"]`).remove()
+            }
+            else if (message.type == 'triliza') {
+                //alert("RECEIVED TRILIZA MESSAGE");
+                if (message.fromUser != userId) {
+                    let r = message.message[0];
+                    let c = message.message[1];
+                    markCell(r, c, true);
+                    console.log(message);
+                }
+            }
+            else {
+                log.value += message.user + ' λεει: ' + message.message + "\n";
+            }
+        }
+
+
+        function socketSend(obj) {
+            obj.user = userId;
+            obj.room = roomId;
+            socket.send( JSON.stringify(obj) );
+        }
+
+/*
+        let constraints = {
+            video: true,
+             audio:false
+            }
+
+        let localVideo = document.getElementById('local');
+        let localStream;
+        let remoteVideo = document.getElementById('remote');
+        let remoteStream = new MediaStream;
+        remoteVideo.srcObject = remoteStream;
+
+        let pc = new RTCPeerConnection({
+            "iceServers": [
+            ]
+        });
+        pc.ontrack = function (evt) {
+            evt.streams[0].getTracks().forEach( function(track) {
+                remoteStream.addTrack(track)
+            });
+            // remoteVideo.srcObject = evt.streams[0];
+        }
+        
+        pc.onicecandidate = function(evt) {
+            if (evt.candidate) {
+                console.log(username() + ": found new candidate", evt.candidate);
+                socketSend( { type: 'candidate', candidate: evt.candidate });
+            }
+            else {
+                console.log(username() + ": No more candidates");
+
+            }
+        }
+
+        pc.ondatachannel = function(evt) {
+            console.log("NEW DATACHANNEL received from other side")
+            let channel = evt.channel;
+            channel.onopen = function(e) {
+                console.log("NEW DATACHANNEL received from other side, just OPENED!");
+                channel.send("Hi this is "+userId);
+            }
+        }
+
+        //navigator.mediaDevices.getUserMedia(constraints).then( constraints )
+
+        function setLocalStream(stream) { 
+            localVideo.srcObject = stream;
+            localStream = stream;
+            localStream.getTracks().forEach( function(track) {
+                console.log("Adding new track of kind:", track.kind);
+                pc.addTrack( track, localStream )
+            });
+            socketSend({type:"join"})
+
+        }*/
+    </script>
+
+</body>
+</html>

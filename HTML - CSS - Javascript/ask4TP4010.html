@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <canvas></canvas>
+        <script>
+            const cnv = document.querySelector("canvas"); //ορισμος κανβα
+            const ctx = cnv.getContext('2d');
+
+            cnv.width = 500; //οριζω μηκος - πλατος
+            cnv.height = 500;
+
+            const r = 100; //οριζω ακτινα κυκλου
+
+            ctx.fillStyle = 'rgba(256,168,10,0.5)'; //χρωμα κυκλου
+            ctx.strokeRect(0,0,cnv.width,cnv.height); //περιγραμμα κανβα
+
+            ctx.beginPath();
+            ctx.arc(cnv.width/2, (cnv.height/2 -r), r, 0, 2*Math.PI); //κυκλος1
+            ctx.arc(cnv.width/2, (cnv.height/2 +r), r, 0, 2*Math.PI); //κυκλος2
+            ctx.fill(); //γεμισμα κυκλου με το υπάρχων fillstyle
+            ctx.closePath();
+
+            ctx.beginPath();
+            ctx.arc((cnv.width/2 -r), cnv.height/2, r, 0, 2*Math.PI); //κυκλος3
+            ctx.arc((cnv.width/2 +r), cnv.height/2, r, 0, 2*Math.PI); //κυκλος4
+            ctx.fill();
+
+        </script>
+    </body>
+</html>

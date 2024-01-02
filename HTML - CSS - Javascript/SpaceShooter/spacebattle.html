@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Space Battle!</title>
+    <style>
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" style="border:thin solid" width="250" height="500"></canvas>
+
+    <script>
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+
+        let k = 2; // 2 εικόνες θα φορτώσω "ασύγχρονα"
+
+        let bgImg = new Image();
+        bgImg.src = "background.png"
+        bgImg.onload = startGame;
+        
+        let shipImg = new Image();
+        shipImg.src = "battleship.png"
+        shipImg.onload = startGame;
+
+        function startGame() {
+            --k;
+            if (k == 0) {
+                gameLoop();
+            }
+        }
+
+        let x = canvas.width/2 - 25;
+        let y = canvas.height - 50;
+
+        let bullets = [];
+
+        document.body.onkeydown = function(event) {
+            if (event.code === 'Space') {
+                // ΒΑζω μια νεα σφαίρα:
+                let bullet = {bx: x+25, by: y}
+                bullets.push(bullet);
+                event.preventDefault();
+            }
+            else if (event.code === 'ArrowLeft') {
+                event.preventDefault();
+                let newx = x - 5;
+                if (0 <= newx) {
+                    x = newx;
+                }
+            }
+            else if (event.code === 'ArrowRight') {
+                event.preventDefault();
+                let newx = x + 5;
+                if (newx + 50 <= canvas.width) {
+                    x = newx;
+                }
+            }
+        }
+
+        let bgSpeed = 4;
+        let bgY = 0;
+
+        function gameLoop() {
+
+            requestAnimationFrame(gameLoop);
+            
+            canvas.width += 0;
+
+            drawBackground();
+            drawSpaceShip();
+
+            ctx.fillStyle = 'yellow';
+
+            let newBullets = [];
+            for (let i = 0; i < bullets.length; i++) {
+                const bullet = bullets[i];
+                ctx.beginPath();
+                ctx.arc(bullet.bx, bullet.by, 3, 0, 2*Math.PI);
+                ctx.fill();
+                // Η σφαίρα "πάει" προς τα πάνω, αρα μειώνω το y
+                // Αν όμως το y της γίνει αρνητικό σημαίνει ότι
+                // δεν θα φαίνεται πλεον αρα δεν θέλω να την κρατήσω στο 
+                // array μου. Για ευκολία λοιπόν έχω ενα αλλο (τοπικο)
+                // array (newBullets) που βαζω τις σφαίρες που θέλω να κρατήσω:
+                bullet.by -= 5;
+                if (bullet.by > 0) {
+                    newBullets.push(bullet);
+                }
+            }
+            // Ενημερώνω τις σφαίρες που θα έχω για την επόμενη φορα:
+            // Θα ειναι αυτές που κρατησα στο newBullets:
+            bullets = newBullets;
+
+        }
+
+        function drawBackground()
+        {
+            // Για να ευκολυνω τους υπολογισμούς και να εχω ενα
+            // smooth κυλισμα του background (έτσι ώστε όταν "τελειώνει"
+            // να ξαναφαίνεται από την αρχή), βαζω 2 φορες τη background
+            // εικόνα, και στον καμβα θα φαίνεται ενα μερος της καθεμιας:
+
+            // Φανταζόμαστε ότι το background εχει πάει bgY pixels
+            // πιο "κάτω" επομένως η εικόνα θα πρέπει να τοποθετηθεί
+            // έτσι ώστε η πανω αριστερη γωνία της να είναι στο x=0, y=bgY       
+            ctx.drawImage(bgImg, 0, bgY, canvas.width, canvas.height);
+            
+            // Αυτό σημαίνει ότι έχει μεινει μια περιοχή με ύψος bgY pixels 
+            // στην πάνω μεριά του καμβα που δεν έχει background. Εκεί επομένως 
+            // θελω να φαίνονται τα τελευταία (κατα ύψος) bgY pixels της εικόνας
+            // μου. Εφόσον η backgound εικόνα μου θα πρέπει να "τελειώνει" στο y=bgY
+            // και επειδη την κάνω "σμίκρυνση" έτσι ώστε να εχει ύψος όσο το canvas.height,
+            // θα πρεπει να ξεκιναει από το y = bgY-canvas.height
+            ctx.drawImage(bgImg, 0, bgY-canvas.height, canvas.width, canvas.height);
+
+            // Το ενημερωνω για την επόμενη φορά (κυλιση κατα bgSpeed ανα frame):
+            bgY += bgSpeed;
+            if (bgY >= canvas.height) {
+                bgY -= canvas.height;
+            }
+
+        }
+
+
+        function drawSpaceShip()
+        {
+            ctx.drawImage(shipImg, x, y, 50, 50);
+        }
+
+
+    </script>
+</body>
+
+</html>

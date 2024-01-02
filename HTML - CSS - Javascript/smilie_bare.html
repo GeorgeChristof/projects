@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            canvas {
+                border: 1px solid black;
+            }
+            .container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                margin:0 auto;
+                width: 700px;
+            }
+            h1 {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Παράδειγμα Scale - Rotate</h1>
+
+            <div>
+                Scale: <span id="v" class="values"></span>
+                <input id="scale-input" type="range" value="1" min="0" max="4" step="0.1">
+                
+                Rotate: <span id="v1" class="values"></span>
+                <input id="rotate-input" type="range" value="0" min="0" max="360" step="1">
+            </div>
+            <canvas width="600" height="600"></canvas>
+    
+        </div>
+    </body>
+    <script>
+
+        let cnv = document.querySelector("canvas");
+        let ctx = cnv.getContext("2d");
+        
+        function smile(ctx)
+        {
+            const R = 60;
+
+            ctx.strokeRect(-R, -R, 2*R, 2*R);
+
+            ctx.beginPath()
+
+            ctx.arc(0,0, R, 0 , 2*Math.PI);
+            ctx.stroke();
+
+            let x = 10;
+            ctx.beginPath()
+            ctx.arc(-R*5/12,-R*2/6+x, R/8, 0 , 2*Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath()
+            ctx.arc(R*5/12,-R*2/6+x, R/8, 0 , 2*Math.PI);
+            ctx.fill();
+
+            ctx.beginPath()
+            ctx.arc(-R/15,-R*1/40+x, 1, 0 , 2*Math.PI);
+            ctx.fill();
+            ctx.beginPath()
+            ctx.arc(R/15,-R*1/40+x, 1, 0 , 2*Math.PI);
+            ctx.fill();
+
+            ctx.beginPath()
+            const a = Math.PI/10
+            ctx.arc(0,0+x, R/3, 0+a , Math.PI-a);
+            ctx.stroke();
+
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath()
+            ctx.rotate(-Math.PI/3);
+            ctx.moveTo(0,-R);
+            ctx.rotate(Math.PI/3);
+            ctx.quadraticCurveTo(-R/3, -R/3, 0,-R);
+            ctx.rotate(Math.PI/3);
+            ctx.quadraticCurveTo(-R/3, -R/3, 0,-R);
+            ctx.stroke();
+
+        }
+
+
+        function drawSmile(s, a) {
+            cnv.width += 0;
+            ctx.translate(x, y);
+            ctx.scale(s, s);
+            ctx.rotate(a);
+            smile(ctx);
+        }
+
+
+        let s=1, a=0;
+
+        let x=cnv.width/2, y=cnv.height/2;
+
+        animate();
+
+        function animate() 
+        {
+            drawSmile(s, a);
+            requestAnimationFrame(animate);
+        }
+
+        document.getElementById("scale-input").onchange = function() {
+            s = this.value;
+            document.getElementById("v").innerText = s;
+        }
+
+        document.getElementById("rotate-input").onchange = function() {
+            let v = this.value;
+            a = v * Math.PI / 180;
+
+            document.getElementById("v1").innerText = v;
+        }
+
+
+        // mousedown : Ο χρήστης πάτησε το αριστερο πλήκτρο του ποντικιου
+        // mouseup : Ο χρήστης αφησε το αριστερο πλήκτρο του ποντικιου
+        // mousemove : Ο χρήστης κουναει το ποντίκι
+
+        cnv.onmousemove = function(evt) {
+            console.log("Mouse move inside canvas "+ evt.offsetX + " " + evt.offsetY);
+        }
+        cnv.onmousedown = function(evt) {
+            
+            console.log("Mouse DOWN inside canvas"+ evt.offsetX + " " + evt.offsetY);
+        }
+        cnv.onmouseup = function(evt) {
+            console.log("Mouse UP inside canvas"+ evt.offsetX + " " + evt.offsetY);
+        }
+    </script>
+</html>

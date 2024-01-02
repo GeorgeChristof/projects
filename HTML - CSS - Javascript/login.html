@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: white;
+            margin:0;
+            font-family: 'Inter', sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 100vh;
+        }
+        input {
+            padding: 0.5em;
+            width: 50ch;
+            box-shadow:none;
+        }
+        form {
+            background-color: #f1f0f3;
+            padding: 3em 2em;
+            border-radius: 5px;
+            box-shadow: 5px 8px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            border-radius: 7px;
+            padding: 1em 2em;
+            color: #1a73e8;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: rgba(86, 106, 133, 0.06);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Είσοδος Χρήστη</h2>
+        <form method="POST" action="do_login.php">
+            <p>Username: <input name="user" type="text"></p>
+            <p>Password: <input name="pwd" type="password"></p>
+            <button type="submit">Είσοδος</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<html>
+<head>
+    <title>Canvas Clock</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #canvas {
+            border: thin solid black;
+        }
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="500" , height="500"></canvas>
+    <audio src="cuckoo.mp3"></audio>
+</body>
+<script type="text/javascript">
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let radius = 200;
+
+    const audio = document.getElementsByTagName("audio")[0];
+
+    function drawClock() {
+        ctx.save();
+        ctx.canvas.width = ctx.canvas.width;
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Set default settings
+
+        // Κεντρο το κέντρο του κανβά
+        ctx.translate(ctx.canvas.width * 0.5, ctx.canvas.height * 0.5);
+
+        // Ο κύκλος του ρολογιού:
+        ctx.save();
+        ctx.fillStyle = 'azure';
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+        ctx.lineWidth = 10;
+        ctx.stroke();
+        ctx.fill();
+        ctx.restore();
+
+        // Το κέντρο (μικρός κύκλος)
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Μικρές γραμμές στην περιφέρεια του κύκλου
+        // Καθεμία αντιστοιχεί σε ένα λεπτό, οπότε έχουμε 60
+        for (let i = 0; i < 60; i++) {
+
+            // Γωνία στην οποία βρίσκεται η γραμμη
+            // Η πρώτη είναι στις 12 η ώρα, άρα σε γωνία -π/2
+            // Ο κύκλος διαιρείται σε 60 μέρη, οπότε αυξάνουμε 
+            // κατα 2π/60 = π/30 κάθε φορά
+            let angle = -Math.PI / 2 + i * Math.PI / 30;
+
+            ctx.save();
+            ctx.rotate(angle);
+            ctx.beginPath();
+
+            let w = 10; // 10 pixels μήκος
+            // ανα 5 κανε πιο παχιες γραμμές, δηλ.
+            // στο και 5', και 10', κλπ
+            ctx.lineWidth = i % 5 == 0 ? 3 : 1;
+            ctx.moveTo(radius - w, 0);
+            ctx.lineTo(radius, 0)
+            ctx.stroke();
+
+            // ανα 5 βαζουμε τον αριθμό της ώρας
+            // δηλ. 12, 1, 2, 3, ..., 11
+            if (i % 5 == 0) {
+                ctx.save();
+                ctx.textAlign = "center";
+                ctx.font = "18pt monospace";
+                ctx.textBaseline = "middle";
+                let hour = i == 0 ? 12 : i / 5; // Ξεκινάμε απο το 12 
+                let digit = hour.toFixed();
+                let dt = ctx.measureText(digit).width / 2;
+                ctx.translate(radius - w - dt - 2, 0);
+                ctx.rotate(-angle);
+                ctx.fillText(digit, 0, 0);
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+        let now = new Date;
+
+        let secsFraction = now.getSeconds() / 60;
+        let minsFraction = (now.getSeconds() + 60 * now.getMinutes()) / (60 * 60);
+        let hoursFraction = (now.getSeconds() + 60 * now.getMinutes() + 60 * 60 * now.getHours()) / (12 * 60 * 60);
+
+        drawHand(hoursFraction, 0.5);
+        drawHand(minsFraction, 0.8);
+        drawHand(secsFraction, 0.9, 3);
+
+        drawDigitalClock(now);
+        ctx.restore();
+
+        // Ο ήχος του "κούκου" όταν συμπληρώνεται μια ώρα:
+        if (now.getMinutes() == 0 && now.getSeconds() == 0 && audio)
+            audio.play();
+    }
+
+    /**
+    * Ζωγράφισε ένα δείκτη. Το μήκος του σε σχέση με την ακτινα 
+    * είναι το size, ενώ η "μύτη" του ξεκινάει arrowSize pixels 
+    * (default: 10 pixels) πριν το τέλος του. Σε ποια γωνία βρισκεται
+    * προσδιορίζεται από το a που είναι κλάσμα του 2π π.χ. αν a=0.5
+    * τότε η γωνία θα ειναι π ακτίνια δηλ. 180 μοίρες.
+    */
+    function drawHand(a, size, arrowSize) {
+        ctx.save();
+        arrowSize = arrowSize || 10;
+        ctx.globalAlpha = 0.5; // διαφάνεια, για να μην καλύπτει τους αριθμούς
+        ctx.lineWidth = 2;
+        ctx.rotate(-Math.PI / 2 + a * 2 * Math.PI);
+        ctx.beginPath();
+        ctx.moveTo(-10, 0); // ξεκίνα λιγο πριν το κεντρο του ρολογιού
+        ctx.lineTo(radius * size - arrowSize, -arrowSize / 2);
+        ctx.lineTo(radius * size, 0);
+        ctx.lineTo(radius * size - arrowSize, arrowSize / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawDigitalClock(now) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Set default settings
+
+        let hours = now.getHours().toFixed();
+        let mins = now.getMinutes().toFixed();
+        let secs = now.getSeconds().toFixed();
+        let timeStr = `${hours.padStart(2, "0")}:${mins.padStart(2, "0")}:${secs.padStart(2, "0")}`;
+
+        ctx.font = "18pt monospace";
+        ctx.textBaseline = "top";
+        ctx.fillText(timeStr, 0, 0); // Πανω αριστερή γωνία
+        ctx.restore();
+    }
+
+    drawClock();
+    setInterval(drawClock, 500);
+</script>
+
+</html>

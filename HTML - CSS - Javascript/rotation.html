@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            #mycanvas {
+                border: 1px solid red;
+            }
+        </style>
+    </head>
+    <body>
+        
+
+        <canvas id="mycanvas" width="600" height="500"> </canvas>
+
+        <button id="start">Start</button>
+        <button id="stop">Stop</button>
+
+
+        <script>
+            let canvas = document.getElementById("mycanvas");
+            let ctx = canvas.getContext('2d');
+            
+            let w = 200;
+
+            let angleInRadians = 3 * Math.PI / 180; // 3 μοιρες περιστροφη σε καθε anmation frame
+
+            let k = 0;
+
+            let raf;
+            function animate() {
+                canvas.width += 0;
+                ctx.translate(canvas.width/2, canvas.height/2);
+                //ctx.clearRect(-canvas.width/2, -canvas.height/2, canvas.width, canvas.height);
+                
+                ctx.beginPath();
+                ctx.fillStyle = 'red';
+                ctx.arc(0, 0, 2, 0, 2 * Math.PI); // center
+                ctx.fill();
+
+                ctx.rotate(k * angleInRadians);
+                ++k;
+                ctx.fillStyle = "rgba(0, 0, 255, 0.2)";
+                ctx.fillRect(-w/2, -w/2, w, w);
+
+                raf = requestAnimationFrame(animate);
+            }
+
+
+            document.getElementById("start").onclick = function() {
+                if (!raf) {
+                    animate();
+                }
+            };
+            document.getElementById("stop").onclick = function() {
+                if (raf) {
+                    cancelAnimationFrame(raf);
+                    raf = 0;
+                }
+            };
+
+        </script>
+    </body>
+</html>

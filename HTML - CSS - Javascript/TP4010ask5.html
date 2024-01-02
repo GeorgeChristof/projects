@@ -1,0 +1,70 @@
+<!DOCTYPE>
+<body>
+    <style>
+        canvas {
+            border: 1px solid gray;
+        }
+    </style>
+    <canvas width="700" height="700"></canvas>
+    <button id="button">Add new Ball!</button>
+    <script>
+        let cnv = document.querySelector("canvas");
+        let ctx = cnv.getContext("2d");
+
+        function Ball(){
+
+            let theta = Math.random() * Math.PI/2;
+
+            let d = 8;
+            let dx = d * Math.cos(theta);
+            let dy = d * Math.sin(theta);
+
+            let r = Math.floor( Math.random() * 255 );
+            let g = Math.floor( Math.random() * 255 );
+            let b = Math.floor( Math.random() * 255 );
+
+            let color = `rgb(${r},${g},${b})`
+            return {x:0, y:0, r:5, dx:dx, dy: dy, color: color}
+        }
+
+        function drawBall(b) {
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, 2*Math.PI);
+            ctx.fillStyle = b.color;
+            ctx.fill();
+        }
+
+        function updateBall(b) {
+            b.x += b.dx;
+            b.y += b.dy;
+
+            if (b.x > cnv.width || b.x < 0) {
+                b.dx = -b.dx;
+            }
+            if (b.y > cnv.height || b.y < 0) {
+                b.dy = -b.dy;
+            }
+        }
+
+        function animateBall(b){
+            drawBall(b);
+            updateBall(b);
+        }
+
+        function animate() {
+            cnv.width += 0; // Clear canvas
+            balls.forEach(animateBall);
+            requestAnimationFrame(animate);
+        }
+
+        function newBall(){
+            let b = Ball();
+            balls.push(b); 
+        }
+
+        let balls = [];
+        newBall();
+        document.getElementById("button").onclick = newBall;
+        animate();
+    </script>
+</body>

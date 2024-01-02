@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Colored Grid</title>
+        <meta charset="utf-8">
+
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                min-height: 100vh;
+                font-size:16px;
+                font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, helvetica, Ubuntu, roboto, noto, arial, sans-serif;
+            }
+
+            .centered {
+                position:absolute;
+                top:50%;
+                left:50%;
+                transform: translate(-50%,-50%);
+            }
+            #grid {
+                width:500px;
+                height:500px;
+                background:rgb(231, 231, 222);
+                border:1px solid blue;
+                position: relative;
+            }
+            .square {
+                width: 20px;
+                height: 20px;
+                position: absolute;
+                border:1px solid blue
+            }
+            .square.clicked {
+                background:red;
+            }
+
+
+            #controls {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin:0.5em;
+            }
+            button {
+                background-color: #e7e7e7;
+                margin-left: 10px;
+                text-align: center;
+                padding: 5px;
+                width: 15ch;   
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="centered">
+
+            <div id="controls">
+                <div>
+                    Select color: <input type="color" id="color" value="#f6b73c">
+                </div>
+                <button id="initialize">Clear!</button>
+            </div>
+            <div id="grid">
+            </div>
+        </div>
+    </body>
+    <script>
+
+
+        const c = document.getElementById("grid");
+        for (let i=0; i<500; i+=20) {
+            for(let j=0; j<500; j+=20) {
+                let r = document.createElement("div");
+                r.style.left = `${i}px`;
+                r.style.top = `${j}px`;
+                r.classList.add('square');
+                r.onclick = onClickCell;
+                c.appendChild(r);
+            }
+        }
+
+        // Θα πρέπει να γραψετε τον ορισμό (τον κώδικα) των 
+        // ακόλουθων 2 συναρτήσεων:
+
+        function onClickCell(ev) {
+            var clr = document.getElementById('color').value; //Κρατάω στο clr το χρώμα που επιλέχθηκε
+            ev.currentTarget.style.backgroundColor = clr;
+            console.log(ev.currentTarget);
+        }
+
+        function clear() {
+            
+            while(c.hasChildNodes()){
+                c.removeChild(c.lastChild); //Διαγράφω όλο το grid
+            }
+            for (let i=0; i<500; i+=20) { //Φτιάχνω το grid απο την αρχή
+                for(let j=0; j<500; j+=20) {
+                    let r = document.createElement("div");
+                    r.style.left = `${i}px`;
+                    r.style.top = `${j}px`;
+                    r.classList.add('square');
+                    r.onclick = onClickCell;
+                    c.appendChild(r);
+                }
+            } 
+        }
+        
+
+
+        document.getElementById("initialize").onclick = clear;
+        
+
+    </script>
+</html>
